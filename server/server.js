@@ -14,9 +14,28 @@ const clientPortalRoutes = require("./routes/client_portal");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.CORS_ORIGIN,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("MT5 SaaS Backend Running");
+});
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, service: "mt5-saas-server" });
@@ -29,7 +48,6 @@ app.use("/api/trades", tradeRoutes);
 app.use("/api/runtime-status", runtimeStatusRoutes);
 app.use("/api/client-portal", clientPortalRoutes);
 
-
 async function ensureAdminUser() {
   const email = String(process.env.ADMIN_EMAIL || "").toLowerCase().trim();
   const password = String(process.env.ADMIN_PASSWORD || "").trim();
@@ -39,15 +57,20 @@ async function ensureAdminUser() {
     return;
   }
 
-  const existing = await pool.query("SELECT id FROM users WHERE email=$1 LIMIT 1", [email]);
+  const existing = await pool.query(
+    "SELECT id FROM users WHERE email=$1 LIMIT 1",
+    [email]
+  );
+
   if (existing.rows.length > 0) {
     return;
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
+
   await pool.query(
     `INSERT INTO users (name, email, password_hash, role)
-     VALUES ($1,$2,$3,$4)`,
+     VALUES ($1, $2, $3, $4)`,
     ["Admin", email, passwordHash, "admin"]
   );
 
@@ -59,8 +82,9 @@ async function start() {
     await pool.query("SELECT NOW()");
     await ensureAdminUser();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`✅ Server running on port ${PORT}`);
+      console.log("✅ Allowed CORS origins:", allowedOrigins);
     });
   } catch (err) {
     console.error("Server startup error", err);
