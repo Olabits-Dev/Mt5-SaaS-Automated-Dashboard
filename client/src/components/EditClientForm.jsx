@@ -1,6 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api";
 
+const FX_SYMBOLS = ["BTCUSD", "XAUUSD", "EURUSD", "USDJPY", "GBPJPY"];
+
+const DERIV_SYMBOLS = [
+  "STEP INDEX",
+  "VOLATILITY 10 INDEX",
+  "VOLATILITY 25 INDEX",
+  "VOLATILITY 75 INDEX",
+  "VOLATILITY 100 INDEX",
+];
+
+const ALL_SYMBOLS = [...FX_SYMBOLS, ...DERIV_SYMBOLS];
+
 export default function EditClientForm({ client, onUpdated, onClose }) {
   const [form, setForm] = useState({
     id: null,
@@ -11,7 +23,7 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
     expiry_date: "",
     active: true,
     dd_limit_pct: 5,
-    allowed_pairs_text: "",
+    allowed_pairs_json: [],
     plan_name: "monthly",
     billing_cycle: "monthly",
     amount_paid: 0,
@@ -36,9 +48,9 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
       expiry_date: client.expiry_date || "",
       active: !!client.active,
       dd_limit_pct: client.dd_limit_pct ?? 5,
-      allowed_pairs_text: Array.isArray(client.allowed_pairs_json)
-        ? client.allowed_pairs_json.join(", ")
-        : client.allowed_pairs_json || "",
+      allowed_pairs_json: Array.isArray(client.allowed_pairs_json)
+        ? client.allowed_pairs_json
+        : [],
       plan_name: client.plan_name || "monthly",
       billing_cycle: client.billing_cycle || "monthly",
       amount_paid: client.amount_paid ?? 0,
@@ -55,6 +67,51 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function togglePair(symbol) {
+    setForm((prev) => {
+      const current = Array.isArray(prev.allowed_pairs_json)
+        ? prev.allowed_pairs_json
+        : [];
+
+      const exists = current.includes(symbol);
+
+      return {
+        ...prev,
+        allowed_pairs_json: exists
+          ? current.filter((item) => item !== symbol)
+          : [...current, symbol],
+      };
+    });
+  }
+
+  function selectAllPairs() {
+    setForm((prev) => ({
+      ...prev,
+      allowed_pairs_json: [...ALL_SYMBOLS],
+    }));
+  }
+
+  function selectFxOnly() {
+    setForm((prev) => ({
+      ...prev,
+      allowed_pairs_json: [...FX_SYMBOLS],
+    }));
+  }
+
+  function selectDerivOnly() {
+    setForm((prev) => ({
+      ...prev,
+      allowed_pairs_json: [...DERIV_SYMBOLS],
+    }));
+  }
+
+  function clearAllPairs() {
+    setForm((prev) => ({
+      ...prev,
+      allowed_pairs_json: [],
+    }));
+  }
+
   async function submit(e) {
     e.preventDefault();
     setLoading(true);
@@ -62,10 +119,6 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
     setErr("");
 
     try {
-      const allowed_pairs_json = form.allowed_pairs_text
-        ? form.allowed_pairs_text.split(",").map((x) => x.trim()).filter(Boolean)
-        : [];
-
       const payload = {
         name: form.name,
         mt5_login: form.mt5_login,
@@ -74,7 +127,9 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
         expiry_date: form.expiry_date || null,
         active: !!form.active,
         dd_limit_pct: Number(form.dd_limit_pct || 5),
-        allowed_pairs_json,
+        allowed_pairs_json: Array.isArray(form.allowed_pairs_json)
+          ? form.allowed_pairs_json
+          : [],
         plan_name: form.plan_name,
         billing_cycle: form.billing_cycle,
         amount_paid: Number(form.amount_paid || 0),
@@ -95,53 +150,88 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
 
   if (!client) return null;
 
+  const selectedCount = Array.isArray(form.allowed_pairs_json)
+    ? form.allowed_pairs_json.length
+    : 0;
+
   return (
     <div className="modal-backdrop">
       <div className="card modal-card">
         <div className="modal-header">
           <h3>Edit Client</h3>
-          <button className="secondary-btn" onClick={onClose}>Close</button>
+          <button className="secondary-btn" onClick={onClose}>
+            Close
+          </button>
         </div>
 
         <form className="form-grid" onSubmit={submit}>
           <div>
             <label>Client Name</label>
-            <input value={form.name} onChange={(e) => updateField("name", e.target.value)} required />
+            <input
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              required
+            />
           </div>
 
           <div>
             <label>MT5 Login</label>
-            <input value={form.mt5_login} onChange={(e) => updateField("mt5_login", e.target.value)} />
+            <input
+              value={form.mt5_login}
+              onChange={(e) => updateField("mt5_login", e.target.value)}
+            />
           </div>
 
           <div>
             <label>MT5 Password</label>
-            <input type="password" value={form.mt5_password} onChange={(e) => updateField("mt5_password", e.target.value)} />
+            <input
+              type="password"
+              value={form.mt5_password}
+              onChange={(e) => updateField("mt5_password", e.target.value)}
+            />
           </div>
 
           <div>
             <label>MT5 Server</label>
-            <input value={form.mt5_server} onChange={(e) => updateField("mt5_server", e.target.value)} />
+            <input
+              value={form.mt5_server}
+              onChange={(e) => updateField("mt5_server", e.target.value)}
+            />
           </div>
 
           <div>
             <label>Expiry Date</label>
-            <input type="date" value={form.expiry_date || ""} onChange={(e) => updateField("expiry_date", e.target.value)} />
+            <input
+              type="date"
+              value={form.expiry_date || ""}
+              onChange={(e) => updateField("expiry_date", e.target.value)}
+            />
           </div>
 
           <div>
             <label>DD Limit %</label>
-            <input type="number" step="0.1" value={form.dd_limit_pct} onChange={(e) => updateField("dd_limit_pct", e.target.value)} />
+            <input
+              type="number"
+              step="0.1"
+              value={form.dd_limit_pct}
+              onChange={(e) => updateField("dd_limit_pct", e.target.value)}
+            />
           </div>
 
           <div>
             <label>Plan</label>
-            <input value={form.plan_name} onChange={(e) => updateField("plan_name", e.target.value)} />
+            <input
+              value={form.plan_name}
+              onChange={(e) => updateField("plan_name", e.target.value)}
+            />
           </div>
 
           <div>
             <label>Billing Cycle</label>
-            <select value={form.billing_cycle} onChange={(e) => updateField("billing_cycle", e.target.value)}>
+            <select
+              value={form.billing_cycle}
+              onChange={(e) => updateField("billing_cycle", e.target.value)}
+            >
               <option value="monthly">monthly</option>
               <option value="quarterly">quarterly</option>
               <option value="yearly">yearly</option>
@@ -151,12 +241,20 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
 
           <div>
             <label>Amount Paid</label>
-            <input type="number" step="0.01" value={form.amount_paid} onChange={(e) => updateField("amount_paid", e.target.value)} />
+            <input
+              type="number"
+              step="0.01"
+              value={form.amount_paid}
+              onChange={(e) => updateField("amount_paid", e.target.value)}
+            />
           </div>
 
           <div>
             <label>Payment Status</label>
-            <select value={form.payment_status} onChange={(e) => updateField("payment_status", e.target.value)}>
+            <select
+              value={form.payment_status}
+              onChange={(e) => updateField("payment_status", e.target.value)}
+            >
               <option value="PAID">PAID</option>
               <option value="PARTIAL">PARTIAL</option>
               <option value="UNPAID">UNPAID</option>
@@ -174,24 +272,122 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
 
           <div>
             <label>Status</label>
-            <select value={form.active ? "active" : "disabled"} onChange={(e) => updateField("active", e.target.value === "active")}>
+            <select
+              value={form.active ? "active" : "disabled"}
+              onChange={(e) => updateField("active", e.target.value === "active")}
+            >
               <option value="active">ACTIVE</option>
               <option value="disabled">DISABLED</option>
             </select>
           </div>
 
           <div className="full-width">
-            <label>Allowed Pairs (comma separated)</label>
-            <input
-              value={form.allowed_pairs_text}
-              onChange={(e) => updateField("allowed_pairs_text", e.target.value)}
-              placeholder="BTCUSD, EURUSD, VOLATILITY 75 INDEX"
-            />
+            <label>Allowed Pairs</label>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "10px",
+                marginBottom: "12px",
+              }}
+            >
+              <button type="button" onClick={selectAllPairs}>
+                Select All
+              </button>
+              <button type="button" onClick={selectFxOnly}>
+                FX Only
+              </button>
+              <button type="button" onClick={selectDerivOnly}>
+                Deriv Only
+              </button>
+              <button type="button" onClick={clearAllPairs}>
+                Clear All
+              </button>
+            </div>
+
+            <div
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: "10px",
+                padding: "14px",
+                background: "#fafafa",
+              }}
+            >
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Selected:</strong> {selectedCount}
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <strong>FX / Core Pairs</strong>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: "10px",
+                  marginBottom: "16px",
+                }}
+              >
+                {FX_SYMBOLS.map((symbol) => (
+                  <label
+                    key={symbol}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.allowed_pairs_json.includes(symbol)}
+                      onChange={() => togglePair(symbol)}
+                    />
+                    <span>{symbol}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: "12px" }}>
+                <strong>Deriv Symbols</strong>
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "10px",
+                }}
+              >
+                {DERIV_SYMBOLS.map((symbol) => (
+                  <label
+                    key={symbol}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.allowed_pairs_json.includes(symbol)}
+                      onChange={() => togglePair(symbol)}
+                    />
+                    <span>{symbol}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="full-width">
             <label>Notes</label>
-            <textarea rows="3" value={form.notes} onChange={(e) => updateField("notes", e.target.value)} />
+            <textarea
+              rows="3"
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+            />
           </div>
 
           {err ? <div className="error-box full-width">{err}</div> : null}
