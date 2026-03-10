@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api";
-
-const FX_SYMBOLS = ["BTCUSD", "XAUUSD", "EURUSD", "USDJPY", "GBPJPY"];
-
-const DERIV_SYMBOLS = [
-  "STEP INDEX",
-  "VOLATILITY 10 INDEX",
-  "VOLATILITY 25 INDEX",
-  "VOLATILITY 75 INDEX",
-  "VOLATILITY 100 INDEX",
-];
-
-const ALL_SYMBOLS = [...FX_SYMBOLS, ...DERIV_SYMBOLS];
+import { ALL_SYMBOLS, DERIV_SYMBOLS, FX_SYMBOLS } from "../constants/pairs";
 
 export default function EditClientForm({ client, onUpdated, onClose }) {
   const [form, setForm] = useState({
@@ -398,7 +387,7 @@ export default function EditClientForm({ client, onUpdated, onClose }) {
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
-        </form>
+        </form> 
       </div>
     </div>
   );

@@ -24,6 +24,8 @@ router.get("/", authRequired, adminOnly, async (req, res) => {
          payment_status,
          subscription_start_date,
          notes,
+         user_id,
+         portal_email,
          created_at
        FROM clients
        ORDER BY created_at DESC`
@@ -54,6 +56,8 @@ router.get("/:id", authRequired, adminOnly, async (req, res) => {
          payment_status,
          subscription_start_date,
          notes,
+         user_id,
+         portal_email,
          created_at
        FROM clients
        WHERE id = $1
@@ -130,6 +134,8 @@ router.post("/", authRequired, adminOnly, async (req, res) => {
         payment_status,
         subscription_start_date,
         notes,
+        user_id,
+        portal_email,
         created_at`,
       [
         String(name).trim(),
@@ -209,6 +215,8 @@ router.put("/:id", authRequired, adminOnly, async (req, res) => {
          payment_status,
          subscription_start_date,
          notes,
+         user_id,
+         portal_email,
          created_at`,
       [
         name,

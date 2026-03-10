@@ -196,7 +196,8 @@ export default function ClientDashboardPage({ auth, onLogout }) {
             <p><strong>Equity:</strong> {formatMoney(runtime.equity || 0)}</p>
             <p><strong>Floating PnL:</strong> {formatMoney(runtime.floating_pnl || 0)}</p>
             <p><strong>Open Positions:</strong> {runtime.active_positions || 0}</p>
-            <p><strong>Last Update:</strong> {formatDate(runtime.updated_at)}</p>
+            <p><strong>Last Update:</strong> {formatDate(runtime.last_sync_at || runtime.updated_at)}</p>
+            <p><strong>Runtime Note:</strong> {runtime.note || "-"}</p>
           </div>
         ) : (
           <p>No runtime status yet.</p>

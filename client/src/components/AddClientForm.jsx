@@ -1,17 +1,6 @@
 import React, { useState } from "react";
 import { api } from "../api";
-
-const FX_SYMBOLS = ["BTCUSD", "XAUUSD", "EURUSD", "USDJPY", "GBPJPY"];
-
-const DERIV_SYMBOLS = [
-  "STEP INDEX",
-  "VOLATILITY 10 INDEX",
-  "VOLATILITY 25 INDEX",
-  "VOLATILITY 75 INDEX",
-  "VOLATILITY 100 INDEX",
-];
-
-const ALL_SYMBOLS = [...FX_SYMBOLS, ...DERIV_SYMBOLS];
+import { ALL_SYMBOLS, DERIV_SYMBOLS, FX_SYMBOLS } from "../constants/pairs";
 
 export default function AddClientForm({ onCreated }) {
   const [form, setForm] = useState({

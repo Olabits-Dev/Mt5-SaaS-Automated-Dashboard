@@ -17,6 +17,7 @@ export default function LiveClientsTable({ rows }) {
               <th>DD Limit</th>
               <th>Positions</th>
               <th>Status</th>
+              <th>Note</th>
               <th>Last Sync</th>
             </tr>
           </thead>
@@ -32,6 +33,7 @@ export default function LiveClientsTable({ rows }) {
                 <td>{r.dd_limit_pct}%</td>
                 <td>{r.active_positions}</td>
                 <td>{r.status}</td>
+                <td>{r.note || "-"}</td>
                 <td>{r.last_sync_at ? new Date(r.last_sync_at).toLocaleString() : "-"}</td>
               </tr>
             ))}

@@ -9,12 +9,14 @@ import LiveClientsTable from "../components/LiveClientsTable";
 import EditClientForm from "../components/EditClientForm";
 import BillingSummaryCard from "../components/BillingSummaryCard";
 import ClientPortalAccessForm from "../components/ClientPortalAccessForm";
+import SignalLogsTable from "../components/SignalLogsTable";
 
 export default function DashboardPage({ auth, onLogout }) {
   const [clients, setClients] = useState([]);
   const [botStatus, setBotStatus] = useState(null);
   const [trades, setTrades] = useState([]);
   const [runtimeRows, setRuntimeRows] = useState([]);
+  const [signalLogs, setSignalLogs] = useState([]);
   const [editingClient, setEditingClient] = useState(null);
   const [portalClient, setPortalClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,17 +28,19 @@ export default function DashboardPage({ auth, onLogout }) {
       setError("");
       setAuthToken(auth?.token || null);
 
-      const [clientsRes, botRes, tradesRes, runtimeRes] = await Promise.all([
+      const [clientsRes, botRes, tradesRes, runtimeRes, signalRes] = await Promise.all([
         api.get("/clients"),
         api.get("/bot/status"),
         api.get("/trades"),
         api.get("/runtime-status"),
+        api.get("/bot/signal-logs?limit=50"),
       ]);
 
       setClients(clientsRes.data || []);
       setBotStatus(botRes.data || null);
       setTrades(tradesRes.data || []);
       setRuntimeRows(runtimeRes.data || []);
+      setSignalLogs(signalRes.data || []);
     } catch (err) {
       setError(err?.response?.data?.error || "Failed to load dashboard data");
     }
@@ -103,6 +107,7 @@ export default function DashboardPage({ auth, onLogout }) {
         <StatCard title="Clients" value={clients.length} subtitle="Total onboarded" />
         <StatCard title="Trades" value={trades.length} subtitle="Recent records" />
         <StatCard title="Active Clients" value={clients.filter((c) => c.active).length} subtitle="Currently enabled" />
+        <StatCard title="Signals" value={signalLogs.length} subtitle="Latest decision logs" />
       </div>
 
       <div className="grid-2">
@@ -144,11 +149,14 @@ export default function DashboardPage({ auth, onLogout }) {
         <div className="card">
           <h3>Sync Notes</h3>
           <p>Dashboard refreshes every 15 seconds.</p>
-          <p>Bot heartbeat, client runtime status, trades, billing, and portal access now appear live.</p>
+          <p>Bot heartbeat, runtime status, trade ingestion, allowed pairs, and portal access appear live.</p>
+          <p>New Deriv pairs and gold strategy reviews are now reflected in signal logs and client pair selection.</p>
         </div>
       </div>
 
       <LiveClientsTable rows={runtimeRows} />
+
+      <SignalLogsTable rows={signalLogs} />
 
       <ClientsTable
         clients={filteredClients}

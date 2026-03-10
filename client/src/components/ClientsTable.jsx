@@ -47,6 +47,7 @@ export default function ClientsTable({
               <th>Billing</th>
               <th>Paid</th>
               <th>Payment</th>
+              <th>Pairs</th>
               <th>Portal</th>
               <th>Expiry</th>
               <th>Status</th>
@@ -56,7 +57,7 @@ export default function ClientsTable({
           <tbody>
             {clients.length === 0 ? (
               <tr>
-                <td colSpan="10">No clients found.</td>
+                <td colSpan="11">No clients found.</td>
               </tr>
             ) : (
               clients.map((c) => (
@@ -67,6 +68,11 @@ export default function ClientsTable({
                   <td>{c.billing_cycle || "-"}</td>
                   <td>{c.amount_paid || 0}</td>
                   <td>{c.payment_status || "UNPAID"}</td>
+                  <td>
+                    {Array.isArray(c.allowed_pairs_json) && c.allowed_pairs_json.length > 0
+                      ? c.allowed_pairs_json.slice(0, 3).join(", ") + (c.allowed_pairs_json.length > 3 ? ` +${c.allowed_pairs_json.length - 3}` : "")
+                      : "ALL"}
+                  </td>
                   <td>{c.portal_email || (c.user_id ? "Linked" : "No Access")}</td>
                   <td>{c.expiry_date || "-"}</td>
                   <td>{c.active ? "ACTIVE" : "DISABLED"}</td>
