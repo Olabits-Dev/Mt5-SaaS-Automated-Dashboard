@@ -82,14 +82,20 @@ async function start() {
     await pool.query("SELECT NOW()");
     await ensureAdminUser();
 
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`✅ Server running on port ${PORT}`);
-      console.log("✅ Allowed CORS origins:", allowedOrigins);
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, "0.0.0.0", () => {
+        console.log(`✅ Server running on port ${PORT}`);
+        console.log("✅ Allowed CORS origins:", allowedOrigins);
+      });
+    }
   } catch (err) {
     console.error("Server startup error", err);
     process.exit(1);
   }
 }
 
-start();
+if (require.main === module) {
+  start();
+}
+
+module.exports = app;
