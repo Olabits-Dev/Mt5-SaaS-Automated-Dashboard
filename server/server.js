@@ -1,3 +1,5 @@
+const fs = require("fs").promises;
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
@@ -54,6 +56,13 @@ app.use("/api/trades", tradeRoutes);
 app.use("/api/runtime-status", runtimeStatusRoutes);
 app.use("/api/client-portal", clientPortalRoutes);
 
+async function ensureSchema() {
+  const schemaPath = path.join(__dirname, "sql", "schema.sql");
+  const schemaSql = await fs.readFile(schemaPath, "utf8");
+  await pool.query(schemaSql);
+  console.log("✅ Database schema ensured");
+}
+
 async function ensureAdminUser() {
   const email = String(process.env.ADMIN_EMAIL || "").toLowerCase().trim();
   const password = String(process.env.ADMIN_PASSWORD || "").trim();
@@ -85,7 +94,15 @@ async function ensureAdminUser() {
 
 async function start() {
   try {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL must be defined");
+    }
+    if (!process.env.JWT_SECRET) {
+      console.warn("WARNING: JWT_SECRET is not set; using fallback secret for token signing.");
+    }
+
     await pool.query("SELECT NOW()");
+    await ensureSchema();
     await ensureAdminUser();
 
     if (process.env.NODE_ENV !== 'production') {

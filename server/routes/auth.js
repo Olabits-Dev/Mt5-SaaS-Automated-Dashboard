@@ -4,6 +4,10 @@ const jwt = require("jsonwebtoken");
 const { pool } = require("../db");
 
 const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
+if (!process.env.JWT_SECRET) {
+  console.warn("WARNING: JWT_SECRET is not set; using fallback secret. Set JWT_SECRET in production for security.");
+}
 
 function signUser(user) {
   return jwt.sign(
@@ -12,7 +16,7 @@ function signUser(user) {
       email: user.email,
       role: user.role,
     },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: "7d" }
   );
 }
