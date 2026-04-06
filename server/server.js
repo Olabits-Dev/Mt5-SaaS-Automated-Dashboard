@@ -87,7 +87,8 @@ async function ensureSchema() {
       ADD COLUMN IF NOT EXISTS portal_email TEXT;
 
     ALTER TABLE trades
-      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
 
     CREATE UNIQUE INDEX IF NOT EXISTS trades_client_ticket_uniq ON trades(client_id, ticket);
 

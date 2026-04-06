@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS trades (
   opened_at TIMESTAMP,
   closed_at TIMESTAMP,
   updated_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
   UNIQUE (client_id, ticket)
 );
 
