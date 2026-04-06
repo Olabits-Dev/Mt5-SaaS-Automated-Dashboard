@@ -113,12 +113,12 @@ async function start() {
     }
   } catch (err) {
     console.error("Server startup error", err);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 }
 
-if (require.main === module) {
-  start();
-}
+start();
 
 module.exports = app;
