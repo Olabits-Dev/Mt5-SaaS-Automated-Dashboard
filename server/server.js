@@ -41,6 +41,19 @@ app.use(
 
 app.use(express.json());
 
+const initPromise = start();
+async function requireInit(req, res, next) {
+  try {
+    await initPromise;
+    next();
+  } catch (err) {
+    console.error("Server initialization failed", err);
+    res.status(500).json({ error: "Server initialization failed" });
+  }
+}
+
+app.use(requireInit);
+
 app.get("/", (req, res) => {
   res.send("MT5 SaaS Backend Running");
 });

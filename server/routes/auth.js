@@ -38,11 +38,18 @@ router.post("/login", async (req, res) => {
     );
 
     const user = rows[0];
-    if (!user) {
+    if (!user || !user.password_hash) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const ok = await bcrypt.compare(password, user.password_hash);
+    let ok = false;
+    try {
+      ok = await bcrypt.compare(password, user.password_hash);
+    } catch (error) {
+      console.error("bcrypt compare error", { email, error: error.message });
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
     if (!ok) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
