@@ -73,6 +73,41 @@ async function ensureSchema() {
   const schemaPath = path.join(__dirname, "sql", "schema.sql");
   const schemaSql = await fs.readFile(schemaPath, "utf8");
   await pool.query(schemaSql);
+
+  await pool.query(`
+    ALTER TABLE clients
+      ADD COLUMN IF NOT EXISTS mt5_password TEXT,
+      ADD COLUMN IF NOT EXISTS plan_name TEXT DEFAULT 'monthly',
+      ADD COLUMN IF NOT EXISTS billing_cycle TEXT DEFAULT 'monthly',
+      ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(18,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'UNPAID',
+      ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '',
+      ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS portal_email TEXT;
+
+    ALTER TABLE trades
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS trades_client_ticket_uniq ON trades(client_id, ticket);
+
+    CREATE TABLE IF NOT EXISTS client_runtime_status (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
+      mt5_login TEXT,
+      mt5_server TEXT,
+      balance NUMERIC(18,2) DEFAULT 0,
+      equity NUMERIC(18,2) DEFAULT 0,
+      floating_pnl NUMERIC(18,2) DEFAULT 0,
+      dd_limit_pct NUMERIC(10,2) DEFAULT 5.00,
+      active_positions INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'running',
+      note TEXT,
+      last_sync_at TIMESTAMP DEFAULT NOW(),
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
   console.log("✅ Database schema ensured");
 }
 
