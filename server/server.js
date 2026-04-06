@@ -16,8 +16,12 @@ const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://olabitsmt5-saas.vercel.app",
   process.env.CORS_ORIGIN,
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .flatMap((origin) => origin.split(",").map((item) => item.trim()))
+  .filter(Boolean);
 
 app.use(
   cors({
@@ -28,6 +32,8 @@ app.use(
       return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
